@@ -1,0 +1,20 @@
+i{
+  "lexicon": 1,
+  "id": "app.noise.modulation.setActorGain",
+  "defs": {
+    "main": {
+      "type": "procedure",
+      "description": "Changes gain applied to network actor. Requires auth.",
+      "input": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["actor","gain"],
+          "properties": {
+            "actor": { "type": "string", "format": "at-identifier" },
+            "gain": { "type": "integer", "maximum": "6", "minimum": "-40" }         
+        }
+      }
+    }
+  }
+}

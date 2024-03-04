@@ -1,0 +1,20 @@
+{
+  "lexicon": 1,
+  "id": "app.noise.modulation.level",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Set the output level of a piece of subject content.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "createdAt", "level"],
+        "properties": {
+          "subject": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "createdAt": { "type": "string", "format": "datetime" },
+          "level": {"type": "integer", "minimum": "0", "maximum": "100"}
+        }
+      }
+    }
+  }
+}
