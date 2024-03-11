@@ -3,6 +3,7 @@ import { AtUri, INVALID_HANDLE, normalizeDatetimeAlways } from '@atproto/syntax'
 import AtpAgent, { AppBskyFeedDefs } from '@atproto/api'
 import { dedupeStrs } from '@atproto/common'
 import { BlobRef } from '@atproto/lexicon'
+import { Keypair } from '@atproto/crypto'
 import { Database } from '../db'
 import {
   ModEventView,
@@ -24,37 +25,47 @@ import {
 } from './types'
 import { REASONOTHER } from '../lexicon/types/com/atproto/moderation/defs'
 import { subjectFromEventRow, subjectFromStatusRow } from './subject'
-import { formatLabel } from './util'
+import { formatLabel, signLabel } from './util'
+import { LabelRow } from '../db/schema/label'
+import { dbLogger } from '../logger'
+import { httpLogger } from '../logger'
 
-export type AppviewAuth = () => Promise<
-  | {
-      headers: {
-        authorization: string
-      }
-    }
-  | undefined
->
+export type AuthHeaders = {
+  headers: {
+    authorization: string
+  }
+}
 
 export class ModerationViews {
   constructor(
     private db: Database,
+    private signingKey: Keypair,
+    private signingKeyId: number,
     private appviewAgent: AtpAgent,
-    private appviewAuth: AppviewAuth,
+    private appviewAuth: () => Promise<AuthHeaders>,
   ) {}
 
   async getAccoutInfosByDid(dids: string[]): Promise<Map<string, AccountView>> {
     if (dids.length === 0) return new Map()
     const auth = await this.appviewAuth()
     if (!auth) return new Map()
-    const res = await this.appviewAgent.api.com.atproto.admin.getAccountInfos(
-      {
-        dids: dedupeStrs(dids),
-      },
-      auth,
-    )
-    return res.data.infos.reduce((acc, cur) => {
-      return acc.set(cur.did, cur)
-    }, new Map<string, AccountView>())
+    try {
+      const res = await this.appviewAgent.api.com.atproto.admin.getAccountInfos(
+        {
+          dids: dedupeStrs(dids),
+        },
+        auth,
+      )
+      return res.data.infos.reduce((acc, cur) => {
+        return acc.set(cur.did, cur)
+      }, new Map<string, AccountView>())
+    } catch (err) {
+      httpLogger.error(
+        { err, dids },
+        'failed to resolve account infos from appview',
+      )
+      return new Map()
+    }
   }
 
   async repos(dids: string[]): Promise<Map<string, RepoView>> {
@@ -154,6 +165,7 @@ export class ModerationViews {
       eventView.event = {
         ...eventView.event,
         subjectLine: event.meta?.subjectLine ?? '',
+        content: event.meta?.content,
       }
     }
 
@@ -404,7 +416,25 @@ export class ModerationViews {
       .if(!includeNeg, (qb) => qb.where('neg', '=', false))
       .selectAll()
       .execute()
-    return res.map((l) => formatLabel(l))
+    return Promise.all(res.map((l) => this.formatLabelAndEnsureSig(l)))
+  }
+
+  async formatLabelAndEnsureSig(row: LabelRow) {
+    const formatted = formatLabel(row)
+    if (!!row.sig && row.signingKeyId === this.signingKeyId) {
+      return formatted
+    }
+    const signed = await signLabel(formatted, this.signingKey)
+    try {
+      await this.db.db
+        .updateTable('label')
+        .set({ sig: Buffer.from(signed.sig), signingKeyId: this.signingKeyId })
+        .where('id', '=', row.id)
+        .execute()
+    } catch (err) {
+      dbLogger.error({ err, label: row }, 'failed to update resigned label')
+    }
+    return signed
   }
 
   async getSubjectStatus(

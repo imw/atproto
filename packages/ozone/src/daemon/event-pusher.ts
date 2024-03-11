@@ -1,10 +1,11 @@
+import assert from 'node:assert'
 import AtpAgent from '@atproto/api'
 import { SECOND } from '@atproto/common'
 import Database from '../db'
+import { RepoPushEventType } from '../db/schema/repo_push_event'
 import { retryHttp } from '../util'
 import { dbLogger } from '../logger'
 import { InputSchema } from '../lexicon/types/com/atproto/admin/updateSubjectStatus'
-import assert from 'assert'
 
 type EventSubject = InputSchema['subject']
 
@@ -72,6 +73,13 @@ export class EventPusher {
     this.poll(this.repoPollState, () => this.pushRepoEvents())
     this.poll(this.recordPollState, () => this.pushRecordEvents())
     this.poll(this.blobPollState, () => this.pushBlobEvents())
+  }
+
+  get takedowns(): RepoPushEventType[] {
+    const takedowns: RepoPushEventType[] = []
+    if (this.pds) takedowns.push('pds_takedown')
+    if (this.appview) takedowns.push('appview_takedown')
+    return takedowns
   }
 
   poll(state: PollState, fn: () => Promise<void>) {
@@ -205,7 +213,7 @@ export class EventPusher {
             ? { confirmedAt: new Date() }
             : {
                 lastAttempted: new Date(),
-                attempts: evt.attempts ?? 0 + 1,
+                attempts: (evt.attempts ?? 0) + 1,
               },
         )
         .where('subjectDid', '=', evt.subjectDid)
@@ -244,7 +252,7 @@ export class EventPusher {
             ? { confirmedAt: new Date() }
             : {
                 lastAttempted: new Date(),
-                attempts: evt.attempts ?? 0 + 1,
+                attempts: (evt.attempts ?? 0) + 1,
               },
         )
         .where('subjectUri', '=', evt.subjectUri)
@@ -284,7 +292,7 @@ export class EventPusher {
             ? { confirmedAt: new Date() }
             : {
                 lastAttempted: new Date(),
-                attempts: evt.attempts ?? 0 + 1,
+                attempts: (evt.attempts ?? 0) + 1,
               },
         )
         .where('subjectDid', '=', evt.subjectDid)

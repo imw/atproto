@@ -1,9 +1,14 @@
+import net from 'node:net'
+import { Insertable, sql } from 'kysely'
 import { CID } from 'multiformats/cid'
 import { AtUri, INVALID_HANDLE } from '@atproto/syntax'
 import { InvalidRequestError } from '@atproto/xrpc-server'
 import { addHoursToDate } from '@atproto/common'
+import { Keypair } from '@atproto/crypto'
+import { IdResolver } from '@atproto/identity'
+import AtpAgent from '@atproto/api'
 import { Database } from '../db'
-import { AppviewAuth, ModerationViews } from './views'
+import { AuthHeaders, ModerationViews } from './views'
 import { Main as StrongRef } from '../lexicon/types/com/atproto/repo/strongRef'
 import {
   isModEventComment,
@@ -30,9 +35,7 @@ import {
 } from './types'
 import { ModerationEvent } from '../db/schema/moderation_event'
 import { StatusKeyset, TimeIdKeyset, paginate } from '../db/pagination'
-import AtpAgent from '@atproto/api'
 import { Label } from '../lexicon/types/com/atproto/label/defs'
-import { Insertable, sql } from 'kysely'
 import {
   ModSubject,
   RecordSubject,
@@ -44,46 +47,60 @@ import { LabelChannel } from '../db/schema/label'
 import { BlobPushEvent } from '../db/schema/blob_push_event'
 import { BackgroundQueue } from '../background'
 import { EventPusher } from '../daemon'
+import { formatLabel, formatLabelRow, signLabel } from './util'
 import { ImageInvalidator } from '../image-invalidator'
 import { httpLogger as log } from '../logger'
+import { OzoneConfig } from '../config'
 
 export type ModerationServiceCreator = (db: Database) => ModerationService
 
 export class ModerationService {
   constructor(
     public db: Database,
+    public signingKey: Keypair,
+    public signingKeyId: number,
+    public cfg: OzoneConfig,
     public backgroundQueue: BackgroundQueue,
+    public idResolver: IdResolver,
     public eventPusher: EventPusher,
     public appviewAgent: AtpAgent,
-    private appviewAuth: AppviewAuth,
-    public serverDid: string,
+    private createAuthHeaders: (aud: string) => Promise<AuthHeaders>,
     public imgInvalidator?: ImageInvalidator,
-    public cdnPaths?: string[],
   ) {}
 
   static creator(
+    signingKey: Keypair,
+    signingKeyId: number,
+    cfg: OzoneConfig,
     backgroundQueue: BackgroundQueue,
+    idResolver: IdResolver,
     eventPusher: EventPusher,
     appviewAgent: AtpAgent,
-    appviewAuth: AppviewAuth,
-    serverDid: string,
+    createAuthHeaders: (aud: string) => Promise<AuthHeaders>,
     imgInvalidator?: ImageInvalidator,
-    cdnPaths?: string[],
   ) {
     return (db: Database) =>
       new ModerationService(
         db,
+        signingKey,
+        signingKeyId,
+        cfg,
         backgroundQueue,
+        idResolver,
         eventPusher,
         appviewAgent,
-        appviewAuth,
-        serverDid,
+        createAuthHeaders,
         imgInvalidator,
-        cdnPaths,
       )
   }
 
-  views = new ModerationViews(this.db, this.appviewAgent, this.appviewAuth)
+  views = new ModerationViews(
+    this.db,
+    this.signingKey,
+    this.signingKeyId,
+    this.appviewAgent,
+    () => this.createAuthHeaders(this.cfg.appview.did),
+  )
 
   async getEvent(id: number): Promise<ModerationEventRow | undefined> {
     return await this.db.db
@@ -291,6 +308,9 @@ export class ModerationService {
 
     if (isModEventEmail(event)) {
       meta.subjectLine = event.subjectLine
+      if (event.content) {
+        meta.content = event.content
+      }
     }
 
     const subjectInfo = subject.info()
@@ -441,7 +461,8 @@ export class ModerationService {
     const takedownRef = `BSKY-${
       isSuspend ? 'SUSPEND' : 'TAKEDOWN'
     }-${takedownId}`
-    const values = TAKEDOWNS.map((eventType) => ({
+
+    const values = this.eventPusher.takedowns.map((eventType) => ({
       eventType,
       subjectDid: subject.did,
       takedownRef,
@@ -502,7 +523,7 @@ export class ModerationService {
   async takedownRecord(subject: RecordSubject, takedownId: number) {
     this.db.assertTransaction()
     const takedownRef = `BSKY-TAKEDOWN-${takedownId}`
-    const values = TAKEDOWNS.map((eventType) => ({
+    const values = this.eventPusher.takedowns.map((eventType) => ({
       eventType,
       subjectDid: subject.did,
       subjectUri: subject.uri,
@@ -541,7 +562,7 @@ export class ModerationService {
 
     if (blobCids && blobCids.length > 0) {
       const blobValues: Insertable<BlobPushEvent>[] = []
-      for (const eventType of TAKEDOWNS) {
+      for (const eventType of this.eventPusher.takedowns) {
         for (const cid of blobCids) {
           blobValues.push({
             eventType,
@@ -582,7 +603,7 @@ export class ModerationService {
           if (this.imgInvalidator) {
             await Promise.allSettled(
               (subject.blobCids ?? []).map((cid) => {
-                const paths = (this.cdnPaths ?? []).map((path) =>
+                const paths = (this.cfg.cdn.paths ?? []).map((path) =>
                   path.replace('%s', subject.did).replace('%s', cid),
                 )
                 return this.imgInvalidator
@@ -861,7 +882,7 @@ export class ModerationService {
   ): Promise<Label[]> {
     const { create = [], negate = [] } = labels
     const toCreate = create.map((val) => ({
-      src: this.serverDid,
+      src: this.cfg.service.did,
       uri,
       cid: cid ?? undefined,
       val,
@@ -869,7 +890,7 @@ export class ModerationService {
       cts: new Date().toISOString(),
     }))
     const toNegate = negate.map((val) => ({
-      src: this.serverDid,
+      src: this.cfg.service.did,
       uri,
       cid: cid ?? undefined,
       val,
@@ -877,21 +898,19 @@ export class ModerationService {
       cts: new Date().toISOString(),
     }))
     const formatted = [...toCreate, ...toNegate]
-    await this.createLabels(formatted)
-    return formatted
+    return this.createLabels(formatted)
   }
 
-  async createLabels(labels: Label[]) {
-    if (labels.length < 1) return
-    const dbVals = labels.map((l) => ({
-      ...l,
-      cid: l.cid ?? '',
-      neg: !!l.neg,
-    }))
+  async createLabels(labels: Label[]): Promise<Label[]> {
+    if (labels.length < 1) return []
+    const signedLabels = await Promise.all(
+      labels.map((l) => signLabel(l, this.signingKey)),
+    )
+    const dbVals = signedLabels.map((l) => formatLabelRow(l, this.signingKeyId))
     const { ref } = this.db.db.dynamic
     await sql`notify ${ref(LabelChannel)}`.execute(this.db.db)
     const excluded = (col: string) => ref(`excluded.${col}`)
-    await this.db.db
+    const res = await this.db.db
       .insertInto('label')
       .values(dbVals)
       .onConflict((oc) =>
@@ -901,8 +920,53 @@ export class ModerationService {
           cts: sql`${excluded('cts')}`,
         }),
       )
+      .returningAll()
       .execute()
+    return res.map((row) => formatLabel(row))
   }
+
+  async sendEmail(opts: {
+    content: string
+    recipientDid: string
+    subject: string
+  }) {
+    const { subject, content, recipientDid } = opts
+    const { pds } = await this.idResolver.did.resolveAtprotoData(recipientDid)
+    const url = new URL(pds)
+    if (!this.cfg.service.devMode && !isSafeUrl(url)) {
+      throw new InvalidRequestError('Invalid pds service in DID doc')
+    }
+    const agent = new AtpAgent({ service: url })
+    const { data: serverInfo } =
+      await agent.api.com.atproto.server.describeServer()
+    if (serverInfo.did !== `did:web:${url.hostname}`) {
+      // @TODO do bidirectional check once implemented. in the meantime,
+      // matching did to hostname we're talking to is pretty good.
+      throw new InvalidRequestError('Invalid pds service in DID doc')
+    }
+    const { data: delivery } = await agent.api.com.atproto.admin.sendEmail(
+      {
+        subject,
+        content,
+        recipientDid,
+        senderDid: this.cfg.service.did,
+      },
+      {
+        encoding: 'application/json',
+        ...(await this.createAuthHeaders(serverInfo.did)),
+      },
+    )
+    if (!delivery.sent) {
+      throw new InvalidRequestError('Email was accepted but not sent')
+    }
+  }
+}
+
+const isSafeUrl = (url: URL) => {
+  if (url.protocol !== 'https:') return false
+  if (!url.hostname || url.hostname === 'localhost') return false
+  if (net.isIP(url.hostname) !== 0) return false
+  return true
 }
 
 const TAKEDOWNS = ['pds_takedown' as const, 'appview_takedown' as const]
