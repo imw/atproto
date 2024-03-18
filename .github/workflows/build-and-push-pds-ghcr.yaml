@@ -13,7 +13,7 @@ env:
 
 jobs:
   pds-container-ghcr:
-    if: github.repository == 'bluesky-social/atproto'
+    if: github.repository == 'imw/atproto'
     runs-on: ubuntu-latest
     permissions:
       contents: read

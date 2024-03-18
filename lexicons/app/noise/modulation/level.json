@@ -12,7 +12,7 @@
         "properties": {
           "subject": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
           "createdAt": { "type": "string", "format": "datetime" },
-          "level": {"type": "integer", "minimum": "0", "maximum": "100"}
+          "level": {"type": "integer", "minimum": "0"}
         }
       }
     }
