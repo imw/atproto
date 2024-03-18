@@ -18,9 +18,8 @@ import {
   isModEventTakedown,
   isModEventEmail,
   isModEventTag,
-  RepoRef,
-  RepoBlobRef,
-} from '../lexicon/types/com/atproto/admin/defs'
+} from '../lexicon/types/tools/ozone/moderation/defs'
+import { RepoRef, RepoBlobRef } from '../lexicon/types/com/atproto/admin/defs'
 import {
   adjustModerationSubjectStatus,
   getStatusIdentifierFromSubject,
@@ -30,8 +29,6 @@ import {
   ModerationEventRow,
   ModerationSubjectStatusRow,
   ReversibleModerationEvent,
-  UNSPECCED_TAKEDOWN_BLOBS_LABEL,
-  UNSPECCED_TAKEDOWN_LABEL,
 } from './types'
 import { ModerationEvent } from '../db/schema/moderation_event'
 import { StatusKeyset, TimeIdKeyset, paginate } from '../db/pagination'
@@ -253,7 +250,7 @@ export class ModerationService {
   async getReport(id: number): Promise<ModerationEventRow | undefined> {
     return await this.db.db
       .selectFrom('moderation_event')
-      .where('action', '=', 'com.atproto.admin.defs#modEventReport')
+      .where('action', '=', 'tools.ozone.moderation.defs#modEventReport')
       .selectAll()
       .where('id', '=', id)
       .executeTakeFirst()
@@ -376,12 +373,12 @@ export class ModerationService {
     // Means the subject was suspended and needs to be unsuspended
     if (subject.reverseSuspend) {
       builder = builder
-        .where('action', '=', 'com.atproto.admin.defs#modEventTakedown')
+        .where('action', '=', 'tools.ozone.moderation.defs#modEventTakedown')
         .where('durationInHours', 'is not', null)
     }
     if (subject.reverseMute) {
       builder = builder
-        .where('action', '=', 'com.atproto.admin.defs#modEventMute')
+        .where('action', '=', 'tools.ozone.moderation.defs#modEventMute')
         .where('durationInHours', 'is not', null)
     }
 
@@ -428,13 +425,13 @@ export class ModerationService {
     subject,
   }: ReversibleModerationEvent): Promise<ModerationEventRow> {
     const isRevertingTakedown =
-      action === 'com.atproto.admin.defs#modEventTakedown'
+      action === 'tools.ozone.moderation.defs#modEventTakedown'
     this.db.assertTransaction()
     const { event } = await this.logEvent({
       event: {
         $type: isRevertingTakedown
-          ? 'com.atproto.admin.defs#modEventReverseTakedown'
-          : 'com.atproto.admin.defs#modEventUnmute',
+          ? 'tools.ozone.moderation.defs#modEventReverseTakedown'
+          : 'tools.ozone.moderation.defs#modEventUnmute',
         comment: comment ?? undefined,
       },
       createdAt,
@@ -481,8 +478,10 @@ export class ModerationService {
       )
       .returning('id')
       .execute()
+
+    const takedownLabel = isSuspend ? SUSPEND_LABEL : TAKEDOWN_LABEL
     await this.formatAndCreateLabels(subject.did, null, {
-      create: [UNSPECCED_TAKEDOWN_LABEL],
+      create: [takedownLabel],
     })
 
     this.db.onCommit(() => {
@@ -507,8 +506,18 @@ export class ModerationService {
       })
       .returning('id')
       .execute()
+
+    const existingTakedownLabels = await this.db.db
+      .selectFrom('label')
+      .where('label.uri', '=', subject.did)
+      .where('label.val', 'in', [TAKEDOWN_LABEL, SUSPEND_LABEL])
+      .where('neg', '=', false)
+      .selectAll()
+      .execute()
+
+    const takedownVals = existingTakedownLabels.map((row) => row.val)
     await this.formatAndCreateLabels(subject.did, null, {
-      negate: [UNSPECCED_TAKEDOWN_LABEL],
+      negate: takedownVals,
     })
 
     this.db.onCommit(() => {
@@ -522,71 +531,29 @@ export class ModerationService {
 
   async takedownRecord(subject: RecordSubject, takedownId: number) {
     this.db.assertTransaction()
-    const takedownRef = `BSKY-TAKEDOWN-${takedownId}`
-    const values = this.eventPusher.takedowns.map((eventType) => ({
-      eventType,
-      subjectDid: subject.did,
-      subjectUri: subject.uri,
-      subjectCid: subject.cid,
-      takedownRef,
-    }))
-    const blobCids = subject.blobCids
-    const labels: string[] = [UNSPECCED_TAKEDOWN_LABEL]
-    if (blobCids && blobCids.length > 0) {
-      labels.push(UNSPECCED_TAKEDOWN_BLOBS_LABEL)
-    }
-    const recordEvts = await this.db.db
-      .insertInto('record_push_event')
-      .values(values)
-      .onConflict((oc) =>
-        oc.columns(['subjectUri', 'eventType']).doUpdateSet({
-          takedownRef,
-          confirmedAt: null,
-          attempts: 0,
-          lastAttempted: null,
-        }),
-      )
-      .returning('id')
-      .execute()
     await this.formatAndCreateLabels(subject.uri, subject.cid, {
-      create: labels,
+      create: [TAKEDOWN_LABEL],
     })
 
-    this.db.onCommit(() => {
-      this.backgroundQueue.add(async () => {
-        await Promise.all(
-          recordEvts.map((evt) => this.eventPusher.attemptRecordEvent(evt.id)),
-        )
-      })
-    })
-
+    const takedownRef = `BSKY-TAKEDOWN-${takedownId}`
+    const blobCids = subject.blobCids
     if (blobCids && blobCids.length > 0) {
       const blobValues: Insertable<BlobPushEvent>[] = []
       for (const eventType of this.eventPusher.takedowns) {
         for (const cid of blobCids) {
           blobValues.push({
             eventType,
-            subjectDid: subject.did,
-            subjectBlobCid: cid.toString(),
             takedownRef,
+            subjectDid: subject.did,
+            subjectUri: subject.uri || null,
+            subjectBlobCid: cid.toString(),
           })
         }
       }
-      const blobEvts = await this.db.db
-        .insertInto('blob_push_event')
-        .values(blobValues)
-        .onConflict((oc) =>
-          oc
-            .columns(['subjectDid', 'subjectBlobCid', 'eventType'])
-            .doUpdateSet({
-              takedownRef,
-              confirmedAt: null,
-              attempts: 0,
-              lastAttempted: null,
-            }),
-        )
-        .returning(['id', 'subjectDid', 'subjectBlobCid', 'eventType'])
-        .execute()
+      const blobEvts = await this.eventPusher.logBlobPushEvent(
+        blobValues,
+        takedownRef,
+      )
 
       this.db.onCommit(() => {
         this.backgroundQueue.add(async () => {
@@ -624,37 +591,11 @@ export class ModerationService {
 
   async reverseTakedownRecord(subject: RecordSubject) {
     this.db.assertTransaction()
-    const labels: string[] = [UNSPECCED_TAKEDOWN_LABEL]
-    const blobCids = subject.blobCids
-    if (blobCids && blobCids.length > 0) {
-      labels.push(UNSPECCED_TAKEDOWN_BLOBS_LABEL)
-    }
-    const recordEvts = await this.db.db
-      .updateTable('record_push_event')
-      .where('eventType', 'in', TAKEDOWNS)
-      .where('subjectDid', '=', subject.did)
-      .where('subjectUri', '=', subject.uri)
-      .set({
-        takedownRef: null,
-        confirmedAt: null,
-        attempts: 0,
-        lastAttempted: null,
-      })
-      .returning('id')
-      .execute()
     await this.formatAndCreateLabels(subject.uri, subject.cid, {
-      negate: labels,
-    }),
-      this.db.onCommit(() => {
-        this.backgroundQueue.add(async () => {
-          await Promise.all(
-            recordEvts.map((evt) =>
-              this.eventPusher.attemptRecordEvent(evt.id),
-            ),
-          )
-        })
-      })
+      negate: [TAKEDOWN_LABEL],
+    })
 
+    const blobCids = subject.blobCids
     if (blobCids && blobCids.length > 0) {
       const blobEvts = await this.db.db
         .updateTable('blob_push_event')
@@ -704,7 +645,7 @@ export class ModerationService {
 
     const result = await this.logEvent({
       event: {
-        $type: 'com.atproto.admin.defs#modEventReport',
+        $type: 'tools.ozone.moderation.defs#modEventReport',
         reportType: reasonType,
         comment: reason,
       },
@@ -886,7 +827,6 @@ export class ModerationService {
       uri,
       cid: cid ?? undefined,
       val,
-      neg: false,
       cts: new Date().toISOString(),
     }))
     const toNegate = negate.map((val) => ({
@@ -918,6 +858,9 @@ export class ModerationService {
           id: sql`${excluded('id')}`,
           neg: sql`${excluded('neg')}`,
           cts: sql`${excluded('cts')}`,
+          exp: sql`${excluded('exp')}`,
+          sig: sql`${excluded('sig')}`,
+          signingKeyId: sql`${excluded('signingKeyId')}`,
         }),
       )
       .returningAll()
@@ -970,6 +913,9 @@ const isSafeUrl = (url: URL) => {
 }
 
 const TAKEDOWNS = ['pds_takedown' as const, 'appview_takedown' as const]
+
+export const TAKEDOWN_LABEL = '!takedown'
+export const SUSPEND_LABEL = '!suspend'
 
 export type TakedownSubjects = {
   did: string
