@@ -3,9 +3,10 @@ import { InvalidRequestError } from '@atproto/xrpc-server'
 import { Server } from '../../../../lexicon'
 import { QueryParams } from '../../../../lexicon/types/app/bsky/feed/getAuthorFeed'
 import AppContext from '../../../../context'
-import { clearlyBadCursor, setRepoRev } from '../../../util'
+import { clearlyBadCursor, resHeaders } from '../../../util'
 import { createPipeline } from '../../../../pipeline'
 import {
+  HydrateCtx,
   HydrationState,
   Hydrator,
   mergeStates,
@@ -26,20 +27,26 @@ export default function (server: Server, ctx: AppContext) {
   )
   server.app.bsky.feed.getAuthorFeed({
     auth: ctx.authVerifier.optionalStandardOrRole,
-    handler: async ({ params, auth, res }) => {
-      const { viewer, canViewTakedowns } = ctx.authVerifier.parseCreds(auth)
+    handler: async ({ params, auth, req }) => {
+      const { viewer, includeTakedowns } = ctx.authVerifier.parseCreds(auth)
+      const labelers = ctx.reqLabelers(req)
+      const hydrateCtx = await ctx.hydrator.createContext({
+        labelers,
+        viewer,
+        includeTakedowns,
+      })
 
-      const result = await getAuthorFeed(
-        { ...params, viewer, includeTakedowns: canViewTakedowns },
-        ctx,
-      )
+      const result = await getAuthorFeed({ ...params, hydrateCtx }, ctx)
 
       const repoRev = await ctx.hydrator.actor.getRepoRevSafe(viewer)
-      setRepoRev(res, repoRev)
 
       return {
         encoding: 'application/json',
         body: result,
+        headers: resHeaders({
+          repoRev,
+          labelers: hydrateCtx.labelers,
+        }),
       }
     },
   })
@@ -63,7 +70,7 @@ export const skeleton = async (inputs: {
   }
   const actors = await ctx.hydrator.actor.getActors(
     [did],
-    params.includeTakedowns,
+    params.hydrateCtx.includeTakedowns,
   )
   const actor = actors.get(did)
   if (!actor) {
@@ -96,15 +103,9 @@ const hydration = async (inputs: {
   skeleton: Skeleton
 }): Promise<HydrationState> => {
   const { ctx, params, skeleton } = inputs
-  const [feedPostState, profileViewerState = {}] = await Promise.all([
-    ctx.hydrator.hydrateFeedItems(
-      skeleton.items,
-      params.viewer,
-      params.includeTakedowns,
-    ),
-    params.viewer
-      ? ctx.hydrator.hydrateProfileViewers([skeleton.actor.did], params.viewer)
-      : undefined,
+  const [feedPostState, profileViewerState] = await Promise.all([
+    ctx.hydrator.hydrateFeedItems(skeleton.items, params.hydrateCtx),
+    ctx.hydrator.hydrateProfileViewers([skeleton.actor.did], params.hydrateCtx),
   ])
   return mergeStates(feedPostState, profileViewerState)
 }
@@ -157,7 +158,9 @@ type Context = {
   dataplane: DataPlaneClient
 }
 
-type Params = QueryParams & { viewer: string | null; includeTakedowns: boolean }
+type Params = QueryParams & {
+  hydrateCtx: HydrateCtx
+}
 
 type Skeleton = {
   actor: Actor

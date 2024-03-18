@@ -1,5 +1,42 @@
 # @atproto/bsky
 
+## 0.0.40
+
+### Patch Changes
+
+- Updated dependencies [[`7dd9941b7`](https://github.com/bluesky-social/atproto/commit/7dd9941b73dbbd82601740e021cc87d765af60ca)]:
+  - @atproto/api@0.11.2
+
+## 0.0.39
+
+### Patch Changes
+
+- Updated dependencies [[`219480764`](https://github.com/bluesky-social/atproto/commit/2194807644cbdb0021e867437693300c1b0e55f5)]:
+  - @atproto/api@0.11.1
+
+## 0.0.38
+
+### Patch Changes
+
+- Updated dependencies [[`4eaadc0ac`](https://github.com/bluesky-social/atproto/commit/4eaadc0acb6b73b9745dd7a2b929d02e58083ab0), [`4eaadc0ac`](https://github.com/bluesky-social/atproto/commit/4eaadc0acb6b73b9745dd7a2b929d02e58083ab0)]:
+  - @atproto/identity@0.3.3
+  - @atproto/api@0.11.0
+  - @atproto/common@0.3.4
+  - @atproto/lexicon@0.3.3
+  - @atproto/repo@0.3.9
+  - @atproto/syntax@0.2.1
+  - @atproto/crypto@0.3.0
+  - @atproto/xrpc-server@0.4.4
+
+## 0.0.37
+
+### Patch Changes
+
+- [#2279](https://github.com/bluesky-social/atproto/pull/2279) [`192223f12`](https://github.com/bluesky-social/atproto/commit/192223f127c0b226287df1ecfcd953636db08655) Thanks [@gaearon](https://github.com/gaearon)! - Change Following feed prefs to only show replies from people you follow by default
+
+- Updated dependencies [[`192223f12`](https://github.com/bluesky-social/atproto/commit/192223f127c0b226287df1ecfcd953636db08655)]:
+  - @atproto/api@0.10.5
+
 ## 0.0.36
 
 ### Patch Changes

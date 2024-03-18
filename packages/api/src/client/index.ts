@@ -7,30 +7,19 @@ import {
 } from '@atproto/xrpc'
 import { schemas } from './lexicons'
 import { CID } from 'multiformats/cid'
-import * as ComAtprotoAdminCreateCommunicationTemplate from './types/com/atproto/admin/createCommunicationTemplate'
 import * as ComAtprotoAdminDefs from './types/com/atproto/admin/defs'
 import * as ComAtprotoAdminDeleteAccount from './types/com/atproto/admin/deleteAccount'
-import * as ComAtprotoAdminDeleteCommunicationTemplate from './types/com/atproto/admin/deleteCommunicationTemplate'
 import * as ComAtprotoAdminDisableAccountInvites from './types/com/atproto/admin/disableAccountInvites'
 import * as ComAtprotoAdminDisableInviteCodes from './types/com/atproto/admin/disableInviteCodes'
-import * as ComAtprotoAdminEmitModerationEvent from './types/com/atproto/admin/emitModerationEvent'
 import * as ComAtprotoAdminEnableAccountInvites from './types/com/atproto/admin/enableAccountInvites'
 import * as ComAtprotoAdminGetAccountInfo from './types/com/atproto/admin/getAccountInfo'
 import * as ComAtprotoAdminGetAccountInfos from './types/com/atproto/admin/getAccountInfos'
 import * as ComAtprotoAdminGetInviteCodes from './types/com/atproto/admin/getInviteCodes'
-import * as ComAtprotoAdminGetModerationEvent from './types/com/atproto/admin/getModerationEvent'
-import * as ComAtprotoAdminGetRecord from './types/com/atproto/admin/getRecord'
-import * as ComAtprotoAdminGetRepo from './types/com/atproto/admin/getRepo'
 import * as ComAtprotoAdminGetSubjectStatus from './types/com/atproto/admin/getSubjectStatus'
-import * as ComAtprotoAdminListCommunicationTemplates from './types/com/atproto/admin/listCommunicationTemplates'
-import * as ComAtprotoAdminQueryModerationEvents from './types/com/atproto/admin/queryModerationEvents'
-import * as ComAtprotoAdminQueryModerationStatuses from './types/com/atproto/admin/queryModerationStatuses'
-import * as ComAtprotoAdminSearchRepos from './types/com/atproto/admin/searchRepos'
 import * as ComAtprotoAdminSendEmail from './types/com/atproto/admin/sendEmail'
 import * as ComAtprotoAdminUpdateAccountEmail from './types/com/atproto/admin/updateAccountEmail'
 import * as ComAtprotoAdminUpdateAccountHandle from './types/com/atproto/admin/updateAccountHandle'
 import * as ComAtprotoAdminUpdateAccountPassword from './types/com/atproto/admin/updateAccountPassword'
-import * as ComAtprotoAdminUpdateCommunicationTemplate from './types/com/atproto/admin/updateCommunicationTemplate'
 import * as ComAtprotoAdminUpdateSubjectStatus from './types/com/atproto/admin/updateSubjectStatus'
 import * as ComAtprotoIdentityGetRecommendedDidCredentials from './types/com/atproto/identity/getRecommendedDidCredentials'
 import * as ComAtprotoIdentityRequestPlcOperationSignature from './types/com/atproto/identity/requestPlcOperationSignature'
@@ -150,6 +139,9 @@ import * as AppBskyGraphMuteActor from './types/app/bsky/graph/muteActor'
 import * as AppBskyGraphMuteActorList from './types/app/bsky/graph/muteActorList'
 import * as AppBskyGraphUnmuteActor from './types/app/bsky/graph/unmuteActor'
 import * as AppBskyGraphUnmuteActorList from './types/app/bsky/graph/unmuteActorList'
+import * as AppBskyLabelerDefs from './types/app/bsky/labeler/defs'
+import * as AppBskyLabelerGetServices from './types/app/bsky/labeler/getServices'
+import * as AppBskyLabelerService from './types/app/bsky/labeler/service'
 import * as AppBskyNotificationGetUnreadCount from './types/app/bsky/notification/getUnreadCount'
 import * as AppBskyNotificationListNotifications from './types/app/bsky/notification/listNotifications'
 import * as AppBskyNotificationRegisterPush from './types/app/bsky/notification/registerPush'
@@ -160,31 +152,33 @@ import * as AppBskyUnspeccedGetPopularFeedGenerators from './types/app/bsky/unsp
 import * as AppBskyUnspeccedGetTaggedSuggestions from './types/app/bsky/unspecced/getTaggedSuggestions'
 import * as AppBskyUnspeccedSearchActorsSkeleton from './types/app/bsky/unspecced/searchActorsSkeleton'
 import * as AppBskyUnspeccedSearchPostsSkeleton from './types/app/bsky/unspecced/searchPostsSkeleton'
+import * as ToolsOzoneCommunicationCreateTemplate from './types/tools/ozone/communication/createTemplate'
+import * as ToolsOzoneCommunicationDefs from './types/tools/ozone/communication/defs'
+import * as ToolsOzoneCommunicationDeleteTemplate from './types/tools/ozone/communication/deleteTemplate'
+import * as ToolsOzoneCommunicationListTemplates from './types/tools/ozone/communication/listTemplates'
+import * as ToolsOzoneCommunicationUpdateTemplate from './types/tools/ozone/communication/updateTemplate'
+import * as ToolsOzoneModerationDefs from './types/tools/ozone/moderation/defs'
+import * as ToolsOzoneModerationEmitEvent from './types/tools/ozone/moderation/emitEvent'
+import * as ToolsOzoneModerationGetEvent from './types/tools/ozone/moderation/getEvent'
+import * as ToolsOzoneModerationGetRecord from './types/tools/ozone/moderation/getRecord'
+import * as ToolsOzoneModerationGetRepo from './types/tools/ozone/moderation/getRepo'
+import * as ToolsOzoneModerationQueryEvents from './types/tools/ozone/moderation/queryEvents'
+import * as ToolsOzoneModerationQueryStatuses from './types/tools/ozone/moderation/queryStatuses'
+import * as ToolsOzoneModerationSearchRepos from './types/tools/ozone/moderation/searchRepos'
 
-export * as ComAtprotoAdminCreateCommunicationTemplate from './types/com/atproto/admin/createCommunicationTemplate'
 export * as ComAtprotoAdminDefs from './types/com/atproto/admin/defs'
 export * as ComAtprotoAdminDeleteAccount from './types/com/atproto/admin/deleteAccount'
-export * as ComAtprotoAdminDeleteCommunicationTemplate from './types/com/atproto/admin/deleteCommunicationTemplate'
 export * as ComAtprotoAdminDisableAccountInvites from './types/com/atproto/admin/disableAccountInvites'
 export * as ComAtprotoAdminDisableInviteCodes from './types/com/atproto/admin/disableInviteCodes'
-export * as ComAtprotoAdminEmitModerationEvent from './types/com/atproto/admin/emitModerationEvent'
 export * as ComAtprotoAdminEnableAccountInvites from './types/com/atproto/admin/enableAccountInvites'
 export * as ComAtprotoAdminGetAccountInfo from './types/com/atproto/admin/getAccountInfo'
 export * as ComAtprotoAdminGetAccountInfos from './types/com/atproto/admin/getAccountInfos'
 export * as ComAtprotoAdminGetInviteCodes from './types/com/atproto/admin/getInviteCodes'
-export * as ComAtprotoAdminGetModerationEvent from './types/com/atproto/admin/getModerationEvent'
-export * as ComAtprotoAdminGetRecord from './types/com/atproto/admin/getRecord'
-export * as ComAtprotoAdminGetRepo from './types/com/atproto/admin/getRepo'
 export * as ComAtprotoAdminGetSubjectStatus from './types/com/atproto/admin/getSubjectStatus'
-export * as ComAtprotoAdminListCommunicationTemplates from './types/com/atproto/admin/listCommunicationTemplates'
-export * as ComAtprotoAdminQueryModerationEvents from './types/com/atproto/admin/queryModerationEvents'
-export * as ComAtprotoAdminQueryModerationStatuses from './types/com/atproto/admin/queryModerationStatuses'
-export * as ComAtprotoAdminSearchRepos from './types/com/atproto/admin/searchRepos'
 export * as ComAtprotoAdminSendEmail from './types/com/atproto/admin/sendEmail'
 export * as ComAtprotoAdminUpdateAccountEmail from './types/com/atproto/admin/updateAccountEmail'
 export * as ComAtprotoAdminUpdateAccountHandle from './types/com/atproto/admin/updateAccountHandle'
 export * as ComAtprotoAdminUpdateAccountPassword from './types/com/atproto/admin/updateAccountPassword'
-export * as ComAtprotoAdminUpdateCommunicationTemplate from './types/com/atproto/admin/updateCommunicationTemplate'
 export * as ComAtprotoAdminUpdateSubjectStatus from './types/com/atproto/admin/updateSubjectStatus'
 export * as ComAtprotoIdentityGetRecommendedDidCredentials from './types/com/atproto/identity/getRecommendedDidCredentials'
 export * as ComAtprotoIdentityRequestPlcOperationSignature from './types/com/atproto/identity/requestPlcOperationSignature'
@@ -304,6 +298,9 @@ export * as AppBskyGraphMuteActor from './types/app/bsky/graph/muteActor'
 export * as AppBskyGraphMuteActorList from './types/app/bsky/graph/muteActorList'
 export * as AppBskyGraphUnmuteActor from './types/app/bsky/graph/unmuteActor'
 export * as AppBskyGraphUnmuteActorList from './types/app/bsky/graph/unmuteActorList'
+export * as AppBskyLabelerDefs from './types/app/bsky/labeler/defs'
+export * as AppBskyLabelerGetServices from './types/app/bsky/labeler/getServices'
+export * as AppBskyLabelerService from './types/app/bsky/labeler/service'
 export * as AppBskyNotificationGetUnreadCount from './types/app/bsky/notification/getUnreadCount'
 export * as AppBskyNotificationListNotifications from './types/app/bsky/notification/listNotifications'
 export * as AppBskyNotificationRegisterPush from './types/app/bsky/notification/registerPush'
@@ -314,12 +311,20 @@ export * as AppBskyUnspeccedGetPopularFeedGenerators from './types/app/bsky/unsp
 export * as AppBskyUnspeccedGetTaggedSuggestions from './types/app/bsky/unspecced/getTaggedSuggestions'
 export * as AppBskyUnspeccedSearchActorsSkeleton from './types/app/bsky/unspecced/searchActorsSkeleton'
 export * as AppBskyUnspeccedSearchPostsSkeleton from './types/app/bsky/unspecced/searchPostsSkeleton'
+export * as ToolsOzoneCommunicationCreateTemplate from './types/tools/ozone/communication/createTemplate'
+export * as ToolsOzoneCommunicationDefs from './types/tools/ozone/communication/defs'
+export * as ToolsOzoneCommunicationDeleteTemplate from './types/tools/ozone/communication/deleteTemplate'
+export * as ToolsOzoneCommunicationListTemplates from './types/tools/ozone/communication/listTemplates'
+export * as ToolsOzoneCommunicationUpdateTemplate from './types/tools/ozone/communication/updateTemplate'
+export * as ToolsOzoneModerationDefs from './types/tools/ozone/moderation/defs'
+export * as ToolsOzoneModerationEmitEvent from './types/tools/ozone/moderation/emitEvent'
+export * as ToolsOzoneModerationGetEvent from './types/tools/ozone/moderation/getEvent'
+export * as ToolsOzoneModerationGetRecord from './types/tools/ozone/moderation/getRecord'
+export * as ToolsOzoneModerationGetRepo from './types/tools/ozone/moderation/getRepo'
+export * as ToolsOzoneModerationQueryEvents from './types/tools/ozone/moderation/queryEvents'
+export * as ToolsOzoneModerationQueryStatuses from './types/tools/ozone/moderation/queryStatuses'
+export * as ToolsOzoneModerationSearchRepos from './types/tools/ozone/moderation/searchRepos'
 
-export const COM_ATPROTO_ADMIN = {
-  DefsReviewOpen: 'com.atproto.admin.defs#reviewOpen',
-  DefsReviewEscalated: 'com.atproto.admin.defs#reviewEscalated',
-  DefsReviewClosed: 'com.atproto.admin.defs#reviewClosed',
-}
 export const COM_ATPROTO_MODERATION = {
   DefsReasonSpam: 'com.atproto.moderation.defs#reasonSpam',
   DefsReasonViolation: 'com.atproto.moderation.defs#reasonViolation',
@@ -332,6 +337,12 @@ export const COM_ATPROTO_MODERATION = {
 export const APP_BSKY_GRAPH = {
   DefsModlist: 'app.bsky.graph.defs#modlist',
   DefsCuratelist: 'app.bsky.graph.defs#curatelist',
+}
+export const TOOLS_OZONE_MODERATION = {
+  DefsReviewOpen: 'tools.ozone.moderation.defs#reviewOpen',
+  DefsReviewEscalated: 'tools.ozone.moderation.defs#reviewEscalated',
+  DefsReviewClosed: 'tools.ozone.moderation.defs#reviewClosed',
+  DefsReviewNone: 'tools.ozone.moderation.defs#reviewNone',
 }
 
 export class AtpBaseClient {
@@ -351,12 +362,14 @@ export class AtpServiceClient {
   xrpc: XrpcServiceClient
   com: ComNS
   app: AppNS
+  tools: ToolsNS
 
   constructor(baseClient: AtpBaseClient, xrpcService: XrpcServiceClient) {
     this._baseClient = baseClient
     this.xrpc = xrpcService
     this.com = new ComNS(this)
     this.app = new AppNS(this)
+    this.tools = new ToolsNS(this)
   }
 
   setHeader(key: string, value: string): void {
@@ -405,22 +418,6 @@ export class ComAtprotoAdminNS {
     this._service = service
   }
 
-  createCommunicationTemplate(
-    data?: ComAtprotoAdminCreateCommunicationTemplate.InputSchema,
-    opts?: ComAtprotoAdminCreateCommunicationTemplate.CallOptions,
-  ): Promise<ComAtprotoAdminCreateCommunicationTemplate.Response> {
-    return this._service.xrpc
-      .call(
-        'com.atproto.admin.createCommunicationTemplate',
-        opts?.qp,
-        data,
-        opts,
-      )
-      .catch((e) => {
-        throw ComAtprotoAdminCreateCommunicationTemplate.toKnownErr(e)
-      })
-  }
-
   deleteAccount(
     data?: ComAtprotoAdminDeleteAccount.InputSchema,
     opts?: ComAtprotoAdminDeleteAccount.CallOptions,
@@ -429,22 +426,6 @@ export class ComAtprotoAdminNS {
       .call('com.atproto.admin.deleteAccount', opts?.qp, data, opts)
       .catch((e) => {
         throw ComAtprotoAdminDeleteAccount.toKnownErr(e)
-      })
-  }
-
-  deleteCommunicationTemplate(
-    data?: ComAtprotoAdminDeleteCommunicationTemplate.InputSchema,
-    opts?: ComAtprotoAdminDeleteCommunicationTemplate.CallOptions,
-  ): Promise<ComAtprotoAdminDeleteCommunicationTemplate.Response> {
-    return this._service.xrpc
-      .call(
-        'com.atproto.admin.deleteCommunicationTemplate',
-        opts?.qp,
-        data,
-        opts,
-      )
-      .catch((e) => {
-        throw ComAtprotoAdminDeleteCommunicationTemplate.toKnownErr(e)
       })
   }
 
@@ -467,17 +448,6 @@ export class ComAtprotoAdminNS {
       .call('com.atproto.admin.disableInviteCodes', opts?.qp, data, opts)
       .catch((e) => {
         throw ComAtprotoAdminDisableInviteCodes.toKnownErr(e)
-      })
-  }
-
-  emitModerationEvent(
-    data?: ComAtprotoAdminEmitModerationEvent.InputSchema,
-    opts?: ComAtprotoAdminEmitModerationEvent.CallOptions,
-  ): Promise<ComAtprotoAdminEmitModerationEvent.Response> {
-    return this._service.xrpc
-      .call('com.atproto.admin.emitModerationEvent', opts?.qp, data, opts)
-      .catch((e) => {
-        throw ComAtprotoAdminEmitModerationEvent.toKnownErr(e)
       })
   }
 
@@ -525,39 +495,6 @@ export class ComAtprotoAdminNS {
       })
   }
 
-  getModerationEvent(
-    params?: ComAtprotoAdminGetModerationEvent.QueryParams,
-    opts?: ComAtprotoAdminGetModerationEvent.CallOptions,
-  ): Promise<ComAtprotoAdminGetModerationEvent.Response> {
-    return this._service.xrpc
-      .call('com.atproto.admin.getModerationEvent', params, undefined, opts)
-      .catch((e) => {
-        throw ComAtprotoAdminGetModerationEvent.toKnownErr(e)
-      })
-  }
-
-  getRecord(
-    params?: ComAtprotoAdminGetRecord.QueryParams,
-    opts?: ComAtprotoAdminGetRecord.CallOptions,
-  ): Promise<ComAtprotoAdminGetRecord.Response> {
-    return this._service.xrpc
-      .call('com.atproto.admin.getRecord', params, undefined, opts)
-      .catch((e) => {
-        throw ComAtprotoAdminGetRecord.toKnownErr(e)
-      })
-  }
-
-  getRepo(
-    params?: ComAtprotoAdminGetRepo.QueryParams,
-    opts?: ComAtprotoAdminGetRepo.CallOptions,
-  ): Promise<ComAtprotoAdminGetRepo.Response> {
-    return this._service.xrpc
-      .call('com.atproto.admin.getRepo', params, undefined, opts)
-      .catch((e) => {
-        throw ComAtprotoAdminGetRepo.toKnownErr(e)
-      })
-  }
-
   getSubjectStatus(
     params?: ComAtprotoAdminGetSubjectStatus.QueryParams,
     opts?: ComAtprotoAdminGetSubjectStatus.CallOptions,
@@ -566,60 +503,6 @@ export class ComAtprotoAdminNS {
       .call('com.atproto.admin.getSubjectStatus', params, undefined, opts)
       .catch((e) => {
         throw ComAtprotoAdminGetSubjectStatus.toKnownErr(e)
-      })
-  }
-
-  listCommunicationTemplates(
-    params?: ComAtprotoAdminListCommunicationTemplates.QueryParams,
-    opts?: ComAtprotoAdminListCommunicationTemplates.CallOptions,
-  ): Promise<ComAtprotoAdminListCommunicationTemplates.Response> {
-    return this._service.xrpc
-      .call(
-        'com.atproto.admin.listCommunicationTemplates',
-        params,
-        undefined,
-        opts,
-      )
-      .catch((e) => {
-        throw ComAtprotoAdminListCommunicationTemplates.toKnownErr(e)
-      })
-  }
-
-  queryModerationEvents(
-    params?: ComAtprotoAdminQueryModerationEvents.QueryParams,
-    opts?: ComAtprotoAdminQueryModerationEvents.CallOptions,
-  ): Promise<ComAtprotoAdminQueryModerationEvents.Response> {
-    return this._service.xrpc
-      .call('com.atproto.admin.queryModerationEvents', params, undefined, opts)
-      .catch((e) => {
-        throw ComAtprotoAdminQueryModerationEvents.toKnownErr(e)
-      })
-  }
-
-  queryModerationStatuses(
-    params?: ComAtprotoAdminQueryModerationStatuses.QueryParams,
-    opts?: ComAtprotoAdminQueryModerationStatuses.CallOptions,
-  ): Promise<ComAtprotoAdminQueryModerationStatuses.Response> {
-    return this._service.xrpc
-      .call(
-        'com.atproto.admin.queryModerationStatuses',
-        params,
-        undefined,
-        opts,
-      )
-      .catch((e) => {
-        throw ComAtprotoAdminQueryModerationStatuses.toKnownErr(e)
-      })
-  }
-
-  searchRepos(
-    params?: ComAtprotoAdminSearchRepos.QueryParams,
-    opts?: ComAtprotoAdminSearchRepos.CallOptions,
-  ): Promise<ComAtprotoAdminSearchRepos.Response> {
-    return this._service.xrpc
-      .call('com.atproto.admin.searchRepos', params, undefined, opts)
-      .catch((e) => {
-        throw ComAtprotoAdminSearchRepos.toKnownErr(e)
       })
   }
 
@@ -664,22 +547,6 @@ export class ComAtprotoAdminNS {
       .call('com.atproto.admin.updateAccountPassword', opts?.qp, data, opts)
       .catch((e) => {
         throw ComAtprotoAdminUpdateAccountPassword.toKnownErr(e)
-      })
-  }
-
-  updateCommunicationTemplate(
-    data?: ComAtprotoAdminUpdateCommunicationTemplate.InputSchema,
-    opts?: ComAtprotoAdminUpdateCommunicationTemplate.CallOptions,
-  ): Promise<ComAtprotoAdminUpdateCommunicationTemplate.Response> {
-    return this._service.xrpc
-      .call(
-        'com.atproto.admin.updateCommunicationTemplate',
-        opts?.qp,
-        data,
-        opts,
-      )
-      .catch((e) => {
-        throw ComAtprotoAdminUpdateCommunicationTemplate.toKnownErr(e)
       })
   }
 
@@ -1404,6 +1271,7 @@ export class AppBskyNS {
   embed: AppBskyEmbedNS
   feed: AppBskyFeedNS
   graph: AppBskyGraphNS
+  labeler: AppBskyLabelerNS
   notification: AppBskyNotificationNS
   richtext: AppBskyRichtextNS
   unspecced: AppBskyUnspeccedNS
@@ -1414,6 +1282,7 @@ export class AppBskyNS {
     this.embed = new AppBskyEmbedNS(service)
     this.feed = new AppBskyFeedNS(service)
     this.graph = new AppBskyGraphNS(service)
+    this.labeler = new AppBskyLabelerNS(service)
     this.notification = new AppBskyNotificationNS(service)
     this.richtext = new AppBskyRichtextNS(service)
     this.unspecced = new AppBskyUnspeccedNS(service)
@@ -2565,6 +2434,97 @@ export class ListitemRecord {
   }
 }
 
+export class AppBskyLabelerNS {
+  _service: AtpServiceClient
+  service: ServiceRecord
+
+  constructor(service: AtpServiceClient) {
+    this._service = service
+    this.service = new ServiceRecord(service)
+  }
+
+  getServices(
+    params?: AppBskyLabelerGetServices.QueryParams,
+    opts?: AppBskyLabelerGetServices.CallOptions,
+  ): Promise<AppBskyLabelerGetServices.Response> {
+    return this._service.xrpc
+      .call('app.bsky.labeler.getServices', params, undefined, opts)
+      .catch((e) => {
+        throw AppBskyLabelerGetServices.toKnownErr(e)
+      })
+  }
+}
+
+export class ServiceRecord {
+  _service: AtpServiceClient
+
+  constructor(service: AtpServiceClient) {
+    this._service = service
+  }
+
+  async list(
+    params: Omit<ComAtprotoRepoListRecords.QueryParams, 'collection'>,
+  ): Promise<{
+    cursor?: string
+    records: { uri: string; value: AppBskyLabelerService.Record }[]
+  }> {
+    const res = await this._service.xrpc.call('com.atproto.repo.listRecords', {
+      collection: 'app.bsky.labeler.service',
+      ...params,
+    })
+    return res.data
+  }
+
+  async get(
+    params: Omit<ComAtprotoRepoGetRecord.QueryParams, 'collection'>,
+  ): Promise<{
+    uri: string
+    cid: string
+    value: AppBskyLabelerService.Record
+  }> {
+    const res = await this._service.xrpc.call('com.atproto.repo.getRecord', {
+      collection: 'app.bsky.labeler.service',
+      ...params,
+    })
+    return res.data
+  }
+
+  async create(
+    params: Omit<
+      ComAtprotoRepoCreateRecord.InputSchema,
+      'collection' | 'record'
+    >,
+    record: AppBskyLabelerService.Record,
+    headers?: Record<string, string>,
+  ): Promise<{ uri: string; cid: string }> {
+    record.$type = 'app.bsky.labeler.service'
+    const res = await this._service.xrpc.call(
+      'com.atproto.repo.createRecord',
+      undefined,
+      {
+        collection: 'app.bsky.labeler.service',
+        rkey: 'self',
+        ...params,
+        record,
+      },
+      { encoding: 'application/json', headers },
+    )
+    return res.data
+  }
+
+  async delete(
+    params: Omit<ComAtprotoRepoDeleteRecord.InputSchema, 'collection'>,
+    headers?: Record<string, string>,
+  ): Promise<void> {
+    await this._service.xrpc.call(
+      'com.atproto.repo.deleteRecord',
+      undefined,
+      { collection: 'app.bsky.labeler.service', ...params },
+      { headers },
+    )
+  }
+}
+
 export class AppBskyNotificationNS {
   _service: AtpServiceClient
 
@@ -2678,6 +2638,165 @@ export class AppBskyUnspeccedNS {
       .call('app.bsky.unspecced.searchPostsSkeleton', params, undefined, opts)
       .catch((e) => {
         throw AppBskyUnspeccedSearchPostsSkeleton.toKnownErr(e)
+      })
+  }
+}
+
+export class ToolsNS {
+  _service: AtpServiceClient
+  ozone: ToolsOzoneNS
+
+  constructor(service: AtpServiceClient) {
+    this._service = service
+    this.ozone = new ToolsOzoneNS(service)
+  }
+}
+
+export class ToolsOzoneNS {
+  _service: AtpServiceClient
+  communication: ToolsOzoneCommunicationNS
+  moderation: ToolsOzoneModerationNS
+
+  constructor(service: AtpServiceClient) {
+    this._service = service
+    this.communication = new ToolsOzoneCommunicationNS(service)
+    this.moderation = new ToolsOzoneModerationNS(service)
+  }
+}
+
+export class ToolsOzoneCommunicationNS {
+  _service: AtpServiceClient
+
+  constructor(service: AtpServiceClient) {
+    this._service = service
+  }
+
+  createTemplate(
+    data?: ToolsOzoneCommunicationCreateTemplate.InputSchema,
+    opts?: ToolsOzoneCommunicationCreateTemplate.CallOptions,
+  ): Promise<ToolsOzoneCommunicationCreateTemplate.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.communication.createTemplate', opts?.qp, data, opts)
+      .catch((e) => {
+        throw ToolsOzoneCommunicationCreateTemplate.toKnownErr(e)
+      })
+  }
+
+  deleteTemplate(
+    data?: ToolsOzoneCommunicationDeleteTemplate.InputSchema,
+    opts?: ToolsOzoneCommunicationDeleteTemplate.CallOptions,
+  ): Promise<ToolsOzoneCommunicationDeleteTemplate.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.communication.deleteTemplate', opts?.qp, data, opts)
+      .catch((e) => {
+        throw ToolsOzoneCommunicationDeleteTemplate.toKnownErr(e)
+      })
+  }
+
+  listTemplates(
+    params?: ToolsOzoneCommunicationListTemplates.QueryParams,
+    opts?: ToolsOzoneCommunicationListTemplates.CallOptions,
+  ): Promise<ToolsOzoneCommunicationListTemplates.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.communication.listTemplates', params, undefined, opts)
+      .catch((e) => {
+        throw ToolsOzoneCommunicationListTemplates.toKnownErr(e)
+      })
+  }
+
+  updateTemplate(
+    data?: ToolsOzoneCommunicationUpdateTemplate.InputSchema,
+    opts?: ToolsOzoneCommunicationUpdateTemplate.CallOptions,
+  ): Promise<ToolsOzoneCommunicationUpdateTemplate.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.communication.updateTemplate', opts?.qp, data, opts)
+      .catch((e) => {
+        throw ToolsOzoneCommunicationUpdateTemplate.toKnownErr(e)
+      })
+  }
+}
+
+export class ToolsOzoneModerationNS {
+  _service: AtpServiceClient
+
+  constructor(service: AtpServiceClient) {
+    this._service = service
+  }
+
+  emitEvent(
+    data?: ToolsOzoneModerationEmitEvent.InputSchema,
+    opts?: ToolsOzoneModerationEmitEvent.CallOptions,
+  ): Promise<ToolsOzoneModerationEmitEvent.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.moderation.emitEvent', opts?.qp, data, opts)
+      .catch((e) => {
+        throw ToolsOzoneModerationEmitEvent.toKnownErr(e)
+      })
+  }
+
+  getEvent(
+    params?: ToolsOzoneModerationGetEvent.QueryParams,
+    opts?: ToolsOzoneModerationGetEvent.CallOptions,
+  ): Promise<ToolsOzoneModerationGetEvent.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.moderation.getEvent', params, undefined, opts)
+      .catch((e) => {
+        throw ToolsOzoneModerationGetEvent.toKnownErr(e)
+      })
+  }
+
+  getRecord(
+    params?: ToolsOzoneModerationGetRecord.QueryParams,
+    opts?: ToolsOzoneModerationGetRecord.CallOptions,
+  ): Promise<ToolsOzoneModerationGetRecord.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.moderation.getRecord', params, undefined, opts)
+      .catch((e) => {
+        throw ToolsOzoneModerationGetRecord.toKnownErr(e)
+      })
+  }
+
+  getRepo(
+    params?: ToolsOzoneModerationGetRepo.QueryParams,
+    opts?: ToolsOzoneModerationGetRepo.CallOptions,
+  ): Promise<ToolsOzoneModerationGetRepo.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.moderation.getRepo', params, undefined, opts)
+      .catch((e) => {
+        throw ToolsOzoneModerationGetRepo.toKnownErr(e)
+      })
+  }
+
+  queryEvents(
+    params?: ToolsOzoneModerationQueryEvents.QueryParams,
+    opts?: ToolsOzoneModerationQueryEvents.CallOptions,
+  ): Promise<ToolsOzoneModerationQueryEvents.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.moderation.queryEvents', params, undefined, opts)
+      .catch((e) => {
+        throw ToolsOzoneModerationQueryEvents.toKnownErr(e)
+      })
+  }
+
+  queryStatuses(
+    params?: ToolsOzoneModerationQueryStatuses.QueryParams,
+    opts?: ToolsOzoneModerationQueryStatuses.CallOptions,
+  ): Promise<ToolsOzoneModerationQueryStatuses.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.moderation.queryStatuses', params, undefined, opts)
+      .catch((e) => {
+        throw ToolsOzoneModerationQueryStatuses.toKnownErr(e)
+      })
+  }
+
+  searchRepos(
+    params?: ToolsOzoneModerationSearchRepos.QueryParams,
+    opts?: ToolsOzoneModerationSearchRepos.CallOptions,
+  ): Promise<ToolsOzoneModerationSearchRepos.Response> {
+    return this._service.xrpc
+      .call('tools.ozone.moderation.searchRepos', params, undefined, opts)
+      .catch((e) => {
+        throw ToolsOzoneModerationSearchRepos.toKnownErr(e)
       })
   }
 }

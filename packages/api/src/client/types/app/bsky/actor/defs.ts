@@ -64,6 +64,7 @@ export interface ProfileViewDetailed {
   followersCount?: number
   followsCount?: number
   postsCount?: number
+  associated?: ProfileAssociated
   indexedAt?: string
   viewer?: ViewerState
   labels?: ComAtprotoLabelDefs.Label[]
@@ -80,6 +81,25 @@ export function isProfileViewDetailed(v: unknown): v is ProfileViewDetailed {
 
 export function validateProfileViewDetailed(v: unknown): ValidationResult {
   return lexicons.validate('app.bsky.actor.defs#profileViewDetailed', v)
+}
+
+export interface ProfileAssociated {
+  lists?: number
+  feedgens?: number
+  labeler?: boolean
+  [k: string]: unknown
+}
+
+export function isProfileAssociated(v: unknown): v is ProfileAssociated {
+  return (
+    isObj(v) &&
+    hasProp(v, '$type') &&
+    v.$type === 'app.bsky.actor.defs#profileAssociated'
+  )
+}
+
+export function validateProfileAssociated(v: unknown): ValidationResult {
+  return lexicons.validate('app.bsky.actor.defs#profileAssociated', v)
 }
 
 /** Metadata about the requesting account's relationship with the subject account. Only has meaningful content for authed requests. */
@@ -137,8 +157,10 @@ export function validateAdultContentPref(v: unknown): ValidationResult {
 }
 
 export interface ContentLabelPref {
+  /** Which labeler does this preference apply to? If undefined, applies globally. */
+  labelerDid?: string
   label: string
-  visibility: 'show' | 'warn' | 'hide' | (string & {})
+  visibility: 'ignore' | 'show' | 'warn' | 'hide' | (string & {})
   [k: string]: unknown
 }
 
@@ -197,7 +219,7 @@ export interface FeedViewPref {
   /** Hide replies in the feed. */
   hideReplies?: boolean
   /** Hide replies in the feed if they are not by followed users. */
-  hideRepliesByUnfollowed?: boolean
+  hideRepliesByUnfollowed: boolean
   /** Hide replies in the feed if they do not have this number of likes. */
   hideRepliesByLikeCount?: number
   /** Hide reposts in the feed. */
@@ -314,4 +336,38 @@ export function isHiddenPostsPref(v: unknown): v is HiddenPostsPref {
 
 export function validateHiddenPostsPref(v: unknown): ValidationResult {
   return lexicons.validate('app.bsky.actor.defs#hiddenPostsPref', v)
+}
+
+export interface LabelersPref {
+  labelers: LabelerPrefItem[]
+  [k: string]: unknown
+}
+
+export function isLabelersPref(v: unknown): v is LabelersPref {
+  return (
+    isObj(v) &&
+    hasProp(v, '$type') &&
+    v.$type === 'app.bsky.actor.defs#labelersPref'
+  )
+}
+
+export function validateLabelersPref(v: unknown): ValidationResult {
+  return lexicons.validate('app.bsky.actor.defs#labelersPref', v)
+}
+
+export interface LabelerPrefItem {
+  did: string
+  [k: string]: unknown
+}
+
+export function isLabelerPrefItem(v: unknown): v is LabelerPrefItem {
+  return (
+    isObj(v) &&
+    hasProp(v, '$type') &&
+    v.$type === 'app.bsky.actor.defs#labelerPrefItem'
+  )
+}
+
+export function validateLabelerPrefItem(v: unknown): ValidationResult {
+  return lexicons.validate('app.bsky.actor.defs#labelerPrefItem', v)
 }
