@@ -29,6 +29,7 @@ export { ServerConfig } from './config'
 export { Database } from './data-plane/server/db'
 export { Redis } from './redis'
 export { AppContext } from './context'
+export { BackgroundQueue } from './data-plane/server/background'
 
 export class BskyAppView {
   public ctx: AppContext
@@ -73,6 +74,17 @@ export class BskyAppView {
     const searchAgent = config.searchUrl
       ? new AtpAgent({ service: config.searchUrl })
       : undefined
+
+    const suggestionsAgent = config.suggestionsUrl
+      ? new AtpAgent({ service: config.suggestionsUrl })
+      : undefined
+    if (suggestionsAgent && config.suggestionsApiKey) {
+      suggestionsAgent.api.setHeader(
+        'authorization',
+        `Bearer ${config.suggestionsApiKey}`,
+      )
+    }
+
     const dataplane = createDataPlaneClient(config.dataplaneUrls, {
       httpVersion: config.dataplaneHttpVersion,
       rejectUnauthorized: !config.dataplaneIgnoreBadTls,
@@ -98,6 +110,7 @@ export class BskyAppView {
 
     const authVerifier = new AuthVerifier(dataplane, {
       ownDid: config.serverDid,
+      alternateAudienceDids: config.alternateAudienceDids,
       modServiceDid: config.modServiceDid,
       adminPasses: config.adminPasswords,
     })
@@ -106,6 +119,7 @@ export class BskyAppView {
       cfg: config,
       dataplane,
       searchAgent,
+      suggestionsAgent,
       hydrator,
       views,
       signingKey,
